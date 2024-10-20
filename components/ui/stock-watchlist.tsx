@@ -128,7 +128,7 @@ export default function StockWatchlist() {
     try {
       const response = await fetch(`/api/stocks/news?symbol=${encodeURIComponent(symbol)}&analyze=true`)
       if (!response.ok) {
-        throw new Error('Failed to fetch news analysis')
+        throw new Error('Failed to fetch news analysis.')
       }
       const data = await response.json()
       setNewsAnalysis(data.analysis)
