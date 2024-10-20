@@ -38,6 +38,7 @@ interface NewsItem {
   title: string
   snippet: string
   source: string
+  link: string
 }
 
 export default function StockWatchlist() {
@@ -407,11 +408,13 @@ export default function StockWatchlist() {
                 <div className="prose max-w-none">
                   <p>{newsAnalysis}</p>
                 </div>
-                <h5 className="font-semibold text-md mt-4 mb-2">Sources:</h5>
+                {/* <h5 className="font-semibold text-md mt-4 mb-2">Sources:</h5> */}
                 <ul className="list-disc pl-5 space-y-2">
                   {newsSources.map((item, index) => (
                     <li key={index}>
-                      <p className="font-medium">{item.title}</p>
+                      <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {item.title}
+                      </a>
                       <p className="text-xs text-gray-500">Source: {item.source}</p>
                     </li>
                   ))}

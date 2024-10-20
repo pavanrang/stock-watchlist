@@ -55,6 +55,7 @@ export async function GET(request: Request) {
       title: item.title,
       snippet: item.snippet,
       source: item.source,
+      link: item.link,
     }))
 
     if (!analyze) {
