@@ -52,6 +52,9 @@ export default function StockWatchlist() {
   const [refreshing, setRefreshing] = useState(false)
   const [recentNews, setRecentNews] = useState<NewsItem[]>([])
   const [loadingNews, setLoadingNews] = useState(false)
+  const [newsAnalysis, setNewsAnalysis] = useState<string>("")
+  const [newsSources, setNewsSources] = useState<NewsItem[]>([])
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false)
 
 
   useEffect(() => {
@@ -120,10 +123,57 @@ export default function StockWatchlist() {
     }
   }
 
+  const fetchNewsAnalysis = async (symbol: string) => {
+    setLoadingAnalysis(true)
+    try {
+      const response = await fetch(`/api/stocks/news?symbol=${encodeURIComponent(symbol)}&analyze=true`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch news analysis')
+      }
+      const data = await response.json()
+      setNewsAnalysis(data.analysis)
+      setNewsSources(data.sources)
+    } catch (error) {
+      console.error("Error fetching news analysis:", error)
+      setError("Failed to fetch news analysis")
+    } finally {
+      setLoadingAnalysis(false)
+    }
+  }
+
   const showAnalysis = async (stock: Stock) => {
     setSelectedStock(stock)
     setShowAnalysisDialog(true)
-    await fetchRecentNews(stock.symbol)
+    setLoadingNews(true)
+    setLoadingAnalysis(true)
+    setError(null)
+
+    try {
+      const [newsResponse, analysisResponse] = await Promise.all([
+        fetch(`/api/stocks/news?symbol=${encodeURIComponent(stock.symbol)}`),
+        fetch(`/api/stocks/news?symbol=${encodeURIComponent(stock.symbol)}&analyze=true`)
+      ]);
+
+      if (!newsResponse.ok) {
+        throw new Error('Failed to fetch recent news')
+      }
+      if (!analysisResponse.ok) {
+        throw new Error('Failed to fetch news analysis')
+      }
+
+      const newsData = await newsResponse.json()
+      const analysisData = await analysisResponse.json()
+
+      setRecentNews(newsData.news)
+      setNewsAnalysis(analysisData.analysis)
+      setNewsSources(analysisData.sources)
+    } catch (error) {
+      console.error("Error fetching news and analysis:", error)
+      setError("Failed to fetch news and analysis")
+    } finally {
+      setLoadingNews(false)
+      setLoadingAnalysis(false)
+    }
   }
 
   const addToWatchlist = () => {
@@ -350,21 +400,26 @@ export default function StockWatchlist() {
             </div>
             <div className="mt-6">
               <h4 className="font-semibold text-lg mb-2">What happened with {selectedStock?.symbol} in the last 24 hours?</h4>
-              {loadingNews ? (
-                <p>Loading recent news...</p>
-              ) : recentNews.length > 0 ? (
+              {loadingAnalysis ? (
+              <p>Analyzing recent news...</p>
+            ) : newsAnalysis ? (
+              <>
+                <div className="prose max-w-none">
+                  <p>{newsAnalysis}</p>
+                </div>
+                <h5 className="font-semibold text-md mt-4 mb-2">Sources:</h5>
                 <ul className="list-disc pl-5 space-y-2">
-                  {recentNews.map((item, index) => (
+                  {newsSources.map((item, index) => (
                     <li key={index}>
                       <p className="font-medium">{item.title}</p>
-                      <p className="text-sm text-gray-600">{item.snippet}</p>
                       <p className="text-xs text-gray-500">Source: {item.source}</p>
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <p>No recent news available.</p>
-              )}
+              </>
+            ) : (
+              <p>No recent news analysis available.</p>
+            )}
             </div>
           </div>
           <DialogFooter>
